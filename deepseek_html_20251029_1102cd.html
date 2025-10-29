@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termômetro Emocional - Identifique suas Emoções</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --alegria: #FFD700;
+            --tristeza: #4169E1;
+            --raiva: #FF4500;
+            --medo: #9370DB;
+            --nojo: #32CD32;
+            --surpresa: #FF69B4;
+            --calma: #20B2AA;
+            --ansiedade: #FF8C00;
+            --neutro: #808080;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        /* Novo Design do Termômetro */
+        .thermometer-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px 0;
+            gap: 40px;
+        }
+
+        .thermometer-container {
+            position: relative;
+            width: 60px;
+            height: 300px;
+            background: #f0f0f0;
+            border-radius: 30px;
+            border: 3px solid #333;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .thermometer-bulb {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4169E1, #FF4500);
+            border-radius: 50%;
+            border: 3px solid #333;
+            z-index: 2;
+        }
+
+        .thermometer-fill {
+            position: absolute;
+            bottom: 0;
+            left: 5px;
+            right: 5px;
+            background: linear-gradient(to top, 
+                #4169E1 0%, 
+                #9370DB 25%, 
+                #FF69B4 50%, 
+                #FF8C00 75%, 
+                #FF4500 100%);
+            border-radius: 20px 20px 0 0;
+            transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 1;
+        }
+
+        .thermometer-scale {
+            position: absolute;
+            left: -40px;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .scale-mark {
+            position: relative;
+            height: 1px;
+            background: #666;
+            width: 15px;
+        }
+
+        .scale-mark.major {
+            width: 25px;
+            background: #333;
+        }
+
+        .scale-mark::after {
+            content: attr(data-value);
+            position: absolute;
+            left: 30px;
+            top: -8px;
+            font-size: 0.8em;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .intensity-indicator {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .current-intensity {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .intensity-label {
+            font-size: 1.1em;
+            color: #666;
+            font-weight: 500;
+        }
+
+        /* Emoções */
+        .emotions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .emotion-card {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emotion-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .emotion-card.active {
+            border-width: 3px;
+            transform: scale(1.05);
+        }
+
+        .emotion-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .emotion-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .emotion-intensity {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* Cores das emoções */
+        .alegria { border-color: var(--alegria); }
+        .alegria.active { background-color: rgba(255, 215, 0, 0.1); }
+
+        .tristeza { border-color: var(--tristeza); }
+        .tristeza.active { background-color: rgba(65, 105, 225, 0.1); }
+
+        .raiva { border-color: var(--raiva); }
+        .raiva.active { background-color: rgba(255, 69, 0, 0.1); }
+
+        .medo { border-color: var(--medo); }
+        .medo.active { background-color: rgba(147, 112, 219, 0.1); }
+
+        .nojo { border-color: var(--nojo); }
+        .nojo.active { background-color: rgba(50, 205, 50, 0.1); }
+
+        .surpresa { border-color: var(--surpresa); }
+        .surpresa.active { background-color: rgba(255, 105, 180, 0.1); }
+
+        .calma { border-color: var(--calma); }
+        .calma.active { background-color: rgba(32, 178, 170, 0.1); }
+
+        .ansiedade { border-color: var(--ansiedade); }
+        .ansiedade.active { background-color: rgba(255, 140, 0, 0.1); }
+
+        /* Controle de Intensidade */
+        .intensity-controls {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .intensity-slider {
+            width: 80%;
+            margin: 20px 0;
+            -webkit-appearance: none;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #4169E1, #9370DB, #FF69B4, #FF8C00, #FF4500);
+            outline: none;
+        }
+
+        .intensity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #333;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        .intensity-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .intensity-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            margin: 0 auto;
+            color: #666;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        /* Resultado */
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result-title {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .emotion-analysis {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .emotion-summary {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .dominant-emotion {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .emotion-description {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .coping-strategies {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .strategy-list {
+            list-style: none;
+            margin-top: 10px;
+        }
+
+        .strategy-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .strategy-list li:before {
+            content: "💡";
+            margin-right: 10px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Animações */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .thermometer-wrapper {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .emotion-analysis {
+                grid-template-columns: 1fr;
+            }
+            
+            .emotions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .thermometer-container {
+                height: 250px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 200px;
+            }
+        }
+
+        /* Efeitos de destaque */
+        .highlight {
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.4), transparent);
+            background-size: 200% 100%;
+            animation: shine 2s infinite;
+        }
+
+        @keyframes shine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🌡️ Termômetro Emocional</h1>
+        <p class="subtitle">Identifique suas emoções e descubra estratégias para lidar com elas</p>
+
+        <!-- Novo Design do Termômetro -->
+        <div class="thermometer-wrapper">
+            <div class="thermometer-container">
+                <div class="thermometer-bulb"></div>
+                <div class="thermometer-fill" id="thermometerFill" style="height: 50%;"></div>
+                
+                <div class="thermometer-scale">
+                    <div class="scale-mark major" data-value="100%"></div>
+                    <div class="scale-mark" data-value="75%"></div>
+                    <div class="scale-mark major" data-value="50%"></div>
+                    <div class="scale-mark" data-value="25%"></div>
+                    <div class="scale-mark major" data-value="0%"></div>
+                </div>
+            </div>
+            
+            <div class="intensity-indicator">
+                <div class="current-intensity" id="currentIntensity">50%</div>
+                <div class="intensity-label" id="intensityLabel">Intensidade Moderada</div>
+            </div>
+        </div>
+
+        <!-- Controle de Intensidade -->
+        <div class="intensity-controls">
+            <h3>Ajuste a Intensidade da Emoção:</h3>
+            <input type="range" min="0" max="100" value="50" class="intensity-slider" id="intensitySlider">
+            <div class="intensity-labels">
+                <span>Muito Leve</span>
+                <span>Moderada</span>
+                <span>Muito Intensa</span>
+            </div>
+        </div>
+
+        <!-- Grid de Emoções -->
+        <div class="emotions-grid" id="emotionsGrid">
+            <!-- Emoções serão inseridas via JavaScript -->
+        </div>
+
+        <!-- Botão de Análise -->
+        <div style="text-align: center;">
+            <button class="btn btn-primary pulse" onclick="analyzeEmotions()">
+                🔍 Analisar Minhas Emoções
+            </button>
+        </div>
+
+        <!-- Resultados -->
+        <div class="result-section fade-in" id="resultSection">
+            <h2 class="result-title">📊 Sua Análise Emocional</h2>
+            
+            <div class="emotion-analysis">
+                <div class="emotion-summary">
+                    <div class="dominant-emotion" id="dominantEmotionIcon">😊</div>
+                    <h3 id="dominantEmotionName">Alegria</h3>
+                    <div class="emotion-intensity" id="dominantEmotionIntensity">Intensidade: 75%</div>
+                </div>
+                
+                <div class="coping-strategies">
+                    <h4>💡 Estratégias Recomendadas:</h4>
+                    <ul class="strategy-list" id="strategyList">
+                        <!-- Estratégias serão inseridas via JavaScript -->
+                    </ul>
+                </div>
+            </div>
+
+            <div class="emotion-description" id="emotionDescription">
+                <!-- Descrição será inserida via JavaScript -->
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="saveAnalysis()">
+                    💾 Salvar Análise
+                </button>
+                <button class="btn btn-secondary" onclick="resetAnalysis()">
+                    🔄 Nova Análise
+                </button>
+                <button class="btn btn-primary" onclick="showJournal()">
+                    📔 Abrir Diário
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema de Emoções
+        const emotionsData = [
+            {
+                id: 'alegria',
+                name: 'Alegria',
+                icon: '😊',
+                description: 'Sentimento de contentamento, felicidade e prazer',
+                intensities: {
+                    low: 'Satisfação tranquila - Um estado de bem-estar suave e contentamento',
+                    medium: 'Felicidade ativa - Sentimentos positivos claros e energizantes',
+                    high: 'Euforia e excitação - Alegria intensa e transbordante'
+                },
+                strategies: [
+                    'Compartilhe sua alegria com outras pessoas',
+                    'Pratique gratidão pelas coisas boas',
+                    'Engaje-se em atividades prazerosas',
+                    'Registre momentos felizes no diário',
+                    'Sorria e espalhe positividade'
+                ]
+            },
+            {
+                id: 'tristeza',
+                name: 'Tristeza',
+                icon: '😢',
+                description: 'Sentimento de perda, desapontamento ou solidão',
+                intensities: {
+                    low: 'Melancolia suave - Uma tristeza leve e contemplativa',
+                    medium: 'Tristeza perceptível - Sentimentos de pesar evidentes',
+                    high: 'Angústia profunda - Tristeza intensa e dolorosa'
+                },
+                strategies: [
+                    'Permita-se sentir a tristeza sem julgamento',
+                    'Converse com alguém de confiança',
+                    'Pratique autocuidado e autocompaixão',
+                    'Engaje-se em atividades calmantes',
+                    'Escreva sobre seus sentimentos'
+                ]
+            },
+            {
+                id: 'raiva',
+                name: 'Raiva',
+                icon: '😠',
+                description: 'Sentimento de irritação, frustração ou fúria',
+                intensities: {
+                    low: 'Irritação leve - Um incômodo passageiro',
+                    medium: 'Frustração evidente - Raiva clara e direcionada',
+                    high: 'Fúria intensa - Raiva avassaladora e difícil de controlar'
+                },
+                strategies: [
+                    'Pratique técnicas de respiração profunda',
+                    'Faça exercícios físicos para liberar energia',
+                    'Identifique a causa real da raiva',
+                    'Expresse seus sentimentos de forma assertiva',
+                    'Tire um tempo para se acalmar antes de reagir'
+                ]
+            },
+            {
+                id: 'medo',
+                name: 'Medo',
+                icon: '😨',
+                description: 'Sentimento de apreensão, ansiedade ou terror',
+                intensities: {
+                    low: 'Preocupação leve - Inquietação sobre possibilidades',
+                    medium: 'Ansiedade moderada - Medo constante e perturbador',
+                    high: 'Pânico ou terror - Medo paralisante e intenso'
+                },
+                strategies: [
+                    'Pratique técnicas de grounding (5-4-3-2-1)',
+                    'Respire profundamente e devagar',
+                    'Identifique pensamentos catastróficos',
+                    'Busque informações reais sobre o que teme',
+                    'Divida problemas grandes em partes menores'
+                ]
+            },
+            {
+                id: 'nojo',
+                name: 'Nojo',
+                icon: '🤢',
+                description: 'Sentimento de repulsa, aversão ou desgosto',
+                intensities: {
+                    low: 'Desconforto leve - Uma sensação desagradável',
+                    medium: 'Aversão clara - Repulsa definida e forte',
+                    high: 'Repulsa intensa - Nojo profundo e aversão extrema'
+                },
+                strategies: [
+                    'Identifique a fonte do nojo',
+                    'Distancie-se temporariamente do estímulo',
+                    'Pratique aceitação sem julgamento',
+                    'Reavalie a situação com perspectiva',
+                    'Busque compreender a origem do sentimento'
+                ]
+            },
+            {
+                id: 'surpresa',
+                name: 'Surpresa',
+                icon: '😲',
+                description: 'Reação a eventos inesperados ou novidades',
+                intensities: {
+                    low: 'Leve espanto - Uma reação sutil ao inesperado',
+                    medium: 'Surpresa evidente - Reação clara e perceptível',
+                    high: 'Choque ou estupefação - Surpresa intensa e impactante'
+                },
+                strategies: [
+                    'Dê um tempo para processar a informação',
+                    'Respire fundo antes de reagir',
+                    'Avalie a situação objetivamente',
+                    'Busque mais informações se necessário',
+                    'Mantenha a mente aberta para novas possibilidades'
+                ]
+            },
+            {
+                id: 'calma',
+                name: 'Calma',
+                icon: '😌',
+                description: 'Estado de tranquilidade, paz interior e serenidade',
+                intensities: {
+                    low: 'Relaxamento leve - Uma sensação de leve tranquilidade',
+                    medium: 'Tranquilidade perceptível - Calma evidente e reconfortante',
+                    high: 'Paz profunda - Serenidade completa e contentamento'
+                },
+                strategies: [
+                    'Aproveite este momento de paz',
+                    'Pratique mindfulness e presença',
+                    'Compartilhe sua serenidade com outros',
+                    'Use esta energia para atividades criativas',
+                    'Cultive práticas que mantenham esta calma'
+                ]
+            },
+            {
+                id: 'ansiedade',
+                name: 'Ansiedade',
+                icon: '😰',
+                description: 'Preocupação excessiva com o futuro e antecipação de perigos',
+                intensities: {
+                    low: 'Inquietação leve - Preocupações passageiras',
+                    medium: 'Preocupação constante - Ansiedade persistente',
+                    high: 'Ansiedade paralisante - Preocupação intensa e debilitante'
+                },
+                strategies: [
+                    'Pratique respiração diafragmática',
+                    'Foque no momento presente',
+                    'Divida problemas em partes menores',
+                    'Estabeleça uma rotina previsível',
+                    'Limite a exposição a gatilhos de ansiedade'
+                ]
+            }
+        ];
+
+        // Estado do jogo
+        let currentEmotions = [];
+        let currentIntensity = 50;
+
+        // Inicialização
+        function initializeGame() {
+            createEmotionCards();
+            setupEventListeners();
+            updateIntensityDisplay();
+        }
+
+        function createEmotionCards() {
+            const grid = document.getElementById('emotionsGrid');
+            grid.innerHTML = '';
+
+            emotionsData.forEach(emotion => {
+                const card = document.createElement('div');
+                card.className = `emotion-card ${emotion.id}`;
+                card.innerHTML = `
+                    <div class="emotion-icon">${emotion.icon}</div>
+                    <div class="emotion-name">${emotion.name}</div>
+                    <div class="emotion-intensity" id="intensity-${emotion.id}">Não selecionada</div>
+                `;
+                card.addEventListener('click', () => toggleEmotion(emotion.id));
+                grid.appendChild(card);
+            });
+        }
+
+        function setupEventListeners() {
+            // Controle de intensidade
+            const slider = document.getElementById('intensitySlider');
+            slider.addEventListener('input', function() {
+                currentIntensity = parseInt(this.value);
+                updateThermometer();
+                updateIntensityDisplay();
+                updateSelectedEmotionsIntensity();
+            });
+        }
+
+        function updateIntensityDisplay() {
+            document.getElementById('currentIntensity').textContent = `${currentIntensity}%`;
+            
+            let label = '';
+            if (currentIntensity <= 20) label = 'Muito Leve';
+            else if (currentIntensity <= 40) label = 'Leve';
+            else if (currentIntensity <= 60) label = 'Moderada';
+            else if (currentIntensity <= 80) label = 'Intensa';
+            else label = 'Muito Intensa';
+            
+            document.getElementById('intensityLabel').textContent = `Intensidade ${label}`;
+        }
+
+        function toggleEmotion(emotionId) {
+            const emotion = emotionsData.find(e => e.id === emotionId);
+            const card = document.querySelector(`.emotion-card.${emotionId}`);
+            const intensityDisplay = document.getElementById(`intensity-${emotionId}`);
+
+            if (currentEmotions.includes(emotionId)) {
+                // Remove a emoção
+                currentEmotions = currentEmotions.filter(e => e !== emotionId);
+                card.classList.remove('active');
+                intensityDisplay.textContent = 'Não selecionada';
+            } else {
+                // Adiciona a emoção
+                currentEmotions.push(emotionId);
+                card.classList.add('active');
+                updateEmotionIntensityDisplay(emotionId);
+            }
+
+            updateThermometer();
+        }
+
+        function updateEmotionIntensityDisplay(emotionId) {
+            const intensityDisplay = document.getElementById(`intensity-${emotionId}`);
+            let intensityText = '';
+            
+            if (currentIntensity <= 20) {
+                intensityText = 'Muito Leve';
+            } else if (currentIntensity <= 40) {
+                intensityText = 'Leve';
+            } else if (currentIntensity <= 60) {
+                intensityText = 'Moderada';
+            } else if (currentIntensity <= 80) {
+                intensityText = 'Intensa';
+            } else {
+                intensityText = 'Muito Intensa';
+            }
+
+            intensityDisplay.textContent = `Intensidade: ${intensityText}`;
+        }
+
+        function updateSelectedEmotionsIntensity() {
+            currentEmotions.forEach(emotionId => {
+                updateEmotionIntensityDisplay(emotionId);
+            });
+        }
+
+        function updateThermometer() {
+            const fill = document.getElementById('thermometerFill');
+            fill.style.height = `${currentIntensity}%`;
+            
+            // Atualiza a cor do bulbo baseado na intensidade
+            const bulb = document.querySelector('.thermometer-bulb');
+            let color = '';
+            
+            if (currentIntensity <= 20) color = '#4169E1';
+            else if (currentIntensity <= 40) color = '#9370DB';
+            else if (currentIntensity <= 60) color = '#FF69B4';
+            else if (currentIntensity <= 80) color = '#FF8C00';
+            else color = '#FF4500';
+            
+            bulb.style.background = `linear-gradient(135deg, ${color}, ${color}dd)`;
+        }
+
+        // ... (restante das funções permanecem as mesmas do código anterior)
+        function analyzeEmotions() {
+            if (currentEmotions.length === 0) {
+                alert('Por favor, selecione pelo menos uma emoção para análise.');
+                return;
+            }
+
+            const resultSection = document.getElementById('resultSection');
+            const dominantEmotion = findDominantEmotion();
+            
+            displayResults(dominantEmotion);
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function findDominantEmotion() {
+            return emotionsData.find(e => e.id === currentEmotions[0]);
+        }
+
+        function displayResults(dominantEmotion) {
+            document.getElementById('dominantEmotionIcon').textContent = dominantEmotion.icon;
+            document.getElementById('dominantEmotionName').textContent = dominantEmotion.name;
+            
+            let intensityText = '';
+            if (currentIntensity <= 20) intensityText = 'Muito Leve';
+            else if (currentIntensity <= 40) intensityText = 'Leve';
+            else if (currentIntensity <= 60) intensityText = 'Moderada';
+            else if (currentIntensity <= 80) intensityText = 'Intensa';
+            else intensityText = 'Muito Intensa';
+            
+            document.getElementById('dominantEmotionIntensity').textContent = `Intensidade: ${intensityText}`;
+
+            let description = dominantEmotion.description + '. ';
+            if (currentIntensity <= 20) {
+                description += dominantEmotion.intensities.low;
+            } else if (currentIntensity <= 60) {
+                description += dominantEmotion.intensities.medium;
+            } else {
+                description += dominantEmotion.intensities.high;
+            }
+
+            document.getElementById('emotionDescription').textContent = description;
+
+            const strategyList = document.getElementById('strategyList');
+            strategyList.innerHTML = '';
+            
+            dominantEmotion.strategies.forEach(strategy => {
+                const li = document.createElement('li');
+                li.textContent = strategy;
+                strategyList.appendChild(li);
+            });
+
+            if (currentIntensity > 80) {
+                const highIntensityStrategies = [
+                    'Procure um ambiente calmo e seguro',
+                    'Considere conversar com um profissional',
+                    'Lembre-se que emoções intensas são temporárias'
+                ];
+                
+                highIntensityStrategies.forEach(strategy => {
+                    const li = document.createElement('li');
+                    li.textContent = strategy;
+                    li.style.color = '#dc3545';
+                    strategyList.appendChild(li);
+                });
+            }
+        }
+
+        function saveAnalysis() {
+            const analysis = {
+                date: new Date().toLocaleString(),
+                emotions: currentEmotions,
+                intensity: currentIntensity,
+                dominantEmotion: currentEmotions[0]
+            };
+
+            let savedAnalyses = JSON.parse(localStorage.getItem('emotionalAnalyses') || '[]');
+            savedAnalyses.push(analysis);
+            localStorage.setItem('emotionalAnalyses', JSON.stringify(savedAnalyses));
+
+            alert('✅ Análise salva com sucesso no seu diário emocional!');
+        }
+
+        function resetAnalysis() {
+            currentEmotions = [];
+            currentIntensity = 50;
+            
+            document.querySelectorAll('.emotion-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.emotion-intensity').forEach(display => {
+                display.textContent = 'Não selecionada';
+            });
+            
+            document.getElementById('intensitySlider').value = 50;
+            document.getElementById('resultSection').style.display = 'none';
+            updateThermometer();
+            updateIntensityDisplay();
+        }
+
+        function showJournal() {
+            const savedAnalyses = JSON.parse(localStorage.getItem('emotionalAnalyses') || '[]');
+            
+            if (savedAnalyses.length === 0) {
+                alert('📔 Seu diário emocional está vazio. Salve algumas análises primeiro!');
+                return;
+            }
+
+            let journalContent = '📊 SEU DIÁRIO EMOCIONAL\n\n';
+            
+            savedAnalyses.forEach((analysis, index) => {
+                const emotion = emotionsData.find(e => e.id === analysis.dominantEmotion);
+                journalContent += `📅 ${analysis.date}\n`;
+                journalContent += `🎭 Emoção: ${emotion ? emotion.name : analysis.dominantEmotion}\n`;
+                journalContent += `🌡️ Intensidade: ${analysis.intensity}%\n`;
+                journalContent += `📝 Emoções: ${analysis.emotions.map(e => {
+                    const emotionObj = emotionsData.find(em => em.id === e);
+                    return emotionObj ? emotionObj.name : e;
+                }).join(', ')}\n\n`;
+            });
+
+            alert(journalContent);
+        }
+
+        // Inicializa o jogo quando a página carrega
+        document.addEventListener('DOMContentLoaded', initializeGame);
+    </script>
+</body>
+</html>
